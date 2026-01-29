@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { AgentDetailModal } from "@/components/agents/AgentDetailModal";
 import { cn } from "@/lib/utils";
 import {
   Bot,
@@ -152,6 +153,13 @@ const activityLog: ActivityEntry[] = [
 
 export default function Agents() {
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+  const openAgentDetail = (agent: Agent) => {
+    setSelectedAgent(agent);
+    setDetailModalOpen(true);
+  };
 
   const toggleAgent = (agentId: string) => {
     setAgents((prev) =>
@@ -319,7 +327,12 @@ export default function Agents() {
                       <p className="text-lg font-semibold">{agent.metrics.avgResponseTime}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="w-full mt-4 gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full mt-4 gap-2"
+                    onClick={() => openAgentDetail(agent)}
+                  >
                     <Zap className="w-4 h-4" />
                     View Details
                   </Button>
@@ -369,6 +382,14 @@ export default function Agents() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Agent Detail Modal */}
+        <AgentDetailModal
+          agent={selectedAgent}
+          open={detailModalOpen}
+          onOpenChange={setDetailModalOpen}
+          onToggleAgent={toggleAgent}
+        />
       </div>
     </div>
   );
