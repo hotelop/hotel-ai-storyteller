@@ -108,11 +108,16 @@ function SidebarContent({ collapsed = false, onNavClick }: SidebarContentProps) 
 
       {/* AI Agent Status */}
       <div className="px-3 pb-4">
-        <div
-          className={cn(
-            "rounded-lg bg-sidebar-accent/50 border border-sidebar-border p-3",
-            collapsed && "p-2"
-          )}
+        <NavLink
+          to="/agents"
+          onClick={onNavClick}
+          className={({ isActive }) =>
+            cn(
+              "block rounded-lg bg-sidebar-accent/50 border border-sidebar-border p-3 transition-all duration-200 hover:bg-sidebar-accent",
+              collapsed && "p-2",
+              isActive && "ring-2 ring-sidebar-primary/50 bg-sidebar-accent"
+            )
+          }
         >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
@@ -132,7 +137,7 @@ function SidebarContent({ collapsed = false, onNavClick }: SidebarContentProps) 
               )}
             </AnimatePresence>
           </div>
-        </div>
+        </NavLink>
       </div>
     </>
   );
