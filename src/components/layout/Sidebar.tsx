@@ -13,8 +13,12 @@ import {
   ChevronRight,
   Sparkles,
   Building2,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -26,17 +30,16 @@ const navItems = [
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
-export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+interface SidebarContentProps {
+  collapsed?: boolean;
+  onNavClick?: () => void;
+}
+
+function SidebarContent({ collapsed = false, onNavClick }: SidebarContentProps) {
   const location = useLocation();
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 72 : 260 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-      className="sidebar-gradient flex flex-col h-screen sticky top-0 border-r border-sidebar-border"
-    >
+    <>
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 h-16 border-b border-sidebar-border">
         <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
@@ -65,8 +68,9 @@ export function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onNavClick}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-primary"
                   : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -130,6 +134,21 @@ export function Sidebar() {
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+export function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <motion.aside
+      initial={false}
+      animate={{ width: collapsed ? 72 : 260 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="sidebar-gradient hidden lg:flex flex-col h-screen sticky top-0 border-r border-sidebar-border"
+    >
+      <SidebarContent collapsed={collapsed} />
 
       {/* Collapse Button */}
       <button
@@ -143,5 +162,29 @@ export function Sidebar() {
         )}
       </button>
     </motion.aside>
+  );
+}
+
+export function MobileSidebar() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          aria-label="Open menu"
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="p-0 w-[280px] sidebar-gradient border-sidebar-border">
+        <div className="flex flex-col h-full">
+          <SidebarContent onNavClick={() => setOpen(false)} />
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
