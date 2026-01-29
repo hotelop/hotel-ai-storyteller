@@ -241,14 +241,21 @@ export default function Social() {
             {/* Scheduled Posts */}
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-medium text-muted-foreground">Upcoming Posts</h4>
+                <h4 className="text-sm font-medium text-muted-foreground">
+                  Posts for {format(selectedDate, "MMM d, yyyy")}
+                </h4>
                 <Button size="sm" className="gap-1 bg-accent text-accent-foreground hover:bg-accent/90">
                   <Plus className="w-4 h-4" />
                   Create Post
                 </Button>
               </div>
 
-              {scheduledPosts.map((post, index) => (
+              {getPostsForDate(selectedDate).length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Calendar className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No posts scheduled for this day</p>
+                </div>
+              ) : getPostsForDate(selectedDate).map((post, index) => (
                 <motion.div
                   key={post.id}
                   initial={{ opacity: 0, x: -10 }}
