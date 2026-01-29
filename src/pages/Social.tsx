@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,15 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  format,
+  startOfWeek,
+  addDays,
+  addMonths,
+  subMonths,
+  isSameDay,
+  isSameMonth,
+} from "date-fns";
 
 const scheduledPosts = [
   {
@@ -30,6 +39,7 @@ const scheduledPosts = [
     title: "Summer Pool Vibes 🌴",
     content: "Dive into relaxation this summer at our stunning rooftop pool. Book now and get 20% off your stay! #SummerGetaway #HotelLife",
     scheduledFor: "Today, 2:00 PM",
+    scheduledDate: new Date(),
     status: "scheduled",
     image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=400&fit=crop",
     estimatedReach: "2.1K",
@@ -41,6 +51,7 @@ const scheduledPosts = [
     title: "Weekend Getaway Package",
     content: "Escape the city stress with our exclusive weekend package. Includes breakfast, spa access, and a complimentary room upgrade.",
     scheduledFor: "Tomorrow, 10:00 AM",
+    scheduledDate: addDays(new Date(), 1),
     status: "scheduled",
     image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=400&fit=crop",
     estimatedReach: "1.8K",
@@ -52,6 +63,7 @@ const scheduledPosts = [
     title: "Business Travel Excellence",
     content: "Our business center is now open 24/7 with high-speed WiFi, private meeting rooms, and complimentary coffee.",
     scheduledFor: "Wed, 9:00 AM",
+    scheduledDate: addDays(new Date(), 2),
     status: "draft",
     image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=400&fit=crop",
     estimatedReach: "950",
@@ -63,6 +75,7 @@ const scheduledPosts = [
     title: "Sunset Views 🌅",
     content: "Witness breathtaking sunsets from our Sky Lounge every evening. Perfect for romantic dinners or client entertainment.",
     scheduledFor: "Thu, 6:00 PM",
+    scheduledDate: addDays(new Date(), 3),
     status: "scheduled",
     image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=400&fit=crop",
     estimatedReach: "3.2K",
@@ -84,11 +97,37 @@ const platformColors: Record<string, string> = {
   twitter: "bg-sky-500/10 text-sky-500",
 };
 
-const calendarDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const calendarDates = [27, 28, 29, 30, 31, 1, 2];
-
 export default function Social() {
   const [selectedPost, setSelectedPost] = useState(scheduledPosts[0]);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Generate week days starting from Monday of the current week view
+  const weekDays = useMemo(() => {
+    const startOfCurrentWeek = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    return Array.from({ length: 7 }, (_, i) => addDays(startOfCurrentWeek, i));
+  }, [selectedDate]);
+
+  // Check if a date has scheduled posts
+  const getPostsForDate = (date: Date) => {
+    return scheduledPosts.filter((post) => isSameDay(post.scheduledDate, date));
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(subMonths(currentMonth, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(addMonths(currentMonth, 1));
+  };
+
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date);
+    const postsOnDate = getPostsForDate(date);
+    if (postsOnDate.length > 0) {
+      setSelectedPost(postsOnDate[0]);
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -145,11 +184,13 @@ export default function Social() {
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-semibold">Content Calendar</h3>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-sm font-medium">January 2026</span>
-                <Button variant="ghost" size="icon">
+                <span className="text-sm font-medium min-w-[120px] text-center">
+                  {format(currentMonth, "MMMM yyyy")}
+                </span>
+                <Button variant="ghost" size="icon" onClick={handleNextMonth}>
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
@@ -157,27 +198,44 @@ export default function Social() {
 
             {/* Mini Calendar Week */}
             <div className="grid grid-cols-7 gap-2 mb-6">
-              {calendarDays.map((day, index) => (
-                <div key={day} className="text-center">
-                  <p className="text-xs text-muted-foreground mb-2">{day}</p>
-                  <div
-                    className={cn(
-                      "aspect-square rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors",
-                      calendarDates[index] === 29
-                        ? "bg-accent text-accent-foreground"
-                        : "bg-secondary/50 hover:bg-secondary"
-                    )}
-                  >
-                    <span className="text-sm font-medium">{calendarDates[index]}</span>
-                    {[29, 30, 1].includes(calendarDates[index]) && (
-                      <div className="flex gap-0.5 mt-1">
-                        <div className="w-1 h-1 rounded-full bg-pink-500" />
-                        {calendarDates[index] !== 1 && <div className="w-1 h-1 rounded-full bg-blue-600" />}
-                      </div>
-                    )}
+              {weekDays.map((date) => {
+                const postsOnDate = getPostsForDate(date);
+                const isSelected = isSameDay(date, selectedDate);
+                const isCurrentMonth = isSameMonth(date, currentMonth);
+
+                return (
+                  <div key={date.toISOString()} className="text-center">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {format(date, "EEE")}
+                    </p>
+                    <div
+                      onClick={() => handleDateClick(date)}
+                      className={cn(
+                        "aspect-square rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all",
+                        isSelected
+                          ? "bg-accent text-accent-foreground shadow-md"
+                          : "bg-secondary/50 hover:bg-secondary hover:scale-105",
+                        !isCurrentMonth && "opacity-50"
+                      )}
+                    >
+                      <span className="text-sm font-medium">{format(date, "d")}</span>
+                      {postsOnDate.length > 0 && (
+                        <div className="flex gap-0.5 mt-1">
+                          {postsOnDate.slice(0, 2).map((post, i) => (
+                            <div
+                              key={i}
+                              className={cn(
+                                "w-1 h-1 rounded-full",
+                                post.platforms.includes("instagram") ? "bg-pink-500" : "bg-blue-600"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Scheduled Posts */}
