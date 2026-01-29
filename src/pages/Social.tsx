@@ -30,6 +30,10 @@ import {
   subMonths,
   isSameDay,
   isSameMonth,
+  startOfMonth,
+  endOfMonth,
+  endOfWeek,
+  isToday,
 } from "date-fns";
 
 const scheduledPosts = [
@@ -101,12 +105,29 @@ export default function Social() {
   const [selectedPost, setSelectedPost] = useState(scheduledPosts[0]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<"week" | "month">("week");
 
   // Generate week days starting from Monday of the current week view
   const weekDays = useMemo(() => {
     const startOfCurrentWeek = startOfWeek(selectedDate, { weekStartsOn: 1 });
     return Array.from({ length: 7 }, (_, i) => addDays(startOfCurrentWeek, i));
   }, [selectedDate]);
+
+  // Generate full month calendar grid (6 weeks to cover all cases)
+  const monthDays = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    
+    const days: Date[] = [];
+    let day = calendarStart;
+    while (day <= calendarEnd) {
+      days.push(day);
+      day = addDays(day, 1);
+    }
+    return days;
+  }, [currentMonth]);
 
   // Check if a date has scheduled posts
   const getPostsForDate = (date: Date) => {
@@ -184,6 +205,31 @@ export default function Social() {
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-semibold">Content Calendar</h3>
               <div className="flex items-center gap-2">
+                {/* View Toggle */}
+                <div className="flex bg-secondary rounded-lg p-0.5 mr-2">
+                  <button
+                    onClick={() => setViewMode("week")}
+                    className={cn(
+                      "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                      viewMode === "week"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Week
+                  </button>
+                  <button
+                    onClick={() => setViewMode("month")}
+                    className={cn(
+                      "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                      viewMode === "month"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Month
+                  </button>
+                </div>
                 <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
@@ -196,47 +242,120 @@ export default function Social() {
               </div>
             </div>
 
-            {/* Mini Calendar Week */}
-            <div className="grid grid-cols-7 gap-2 mb-6">
-              {weekDays.map((date) => {
-                const postsOnDate = getPostsForDate(date);
-                const isSelected = isSameDay(date, selectedDate);
-                const isCurrentMonth = isSameMonth(date, currentMonth);
+            {/* Week View */}
+            {viewMode === "week" && (
+              <div className="grid grid-cols-7 gap-2 mb-6">
+                {weekDays.map((date) => {
+                  const postsOnDate = getPostsForDate(date);
+                  const isSelected = isSameDay(date, selectedDate);
+                  const isCurrentMonth = isSameMonth(date, currentMonth);
 
-                return (
-                  <div key={date.toISOString()} className="text-center">
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {format(date, "EEE")}
-                    </p>
-                    <div
-                      onClick={() => handleDateClick(date)}
-                      className={cn(
-                        "aspect-square rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all",
-                        isSelected
-                          ? "bg-accent text-accent-foreground shadow-md"
-                          : "bg-secondary/50 hover:bg-secondary hover:scale-105",
-                        !isCurrentMonth && "opacity-50"
-                      )}
-                    >
-                      <span className="text-sm font-medium">{format(date, "d")}</span>
-                      {postsOnDate.length > 0 && (
-                        <div className="flex gap-0.5 mt-1">
-                          {postsOnDate.slice(0, 2).map((post, i) => (
-                            <div
-                              key={i}
-                              className={cn(
-                                "w-1 h-1 rounded-full",
-                                post.platforms.includes("instagram") ? "bg-pink-500" : "bg-blue-600"
-                              )}
-                            />
-                          ))}
-                        </div>
-                      )}
+                  return (
+                    <div key={date.toISOString()} className="text-center">
+                      <p className="text-xs text-muted-foreground mb-2">
+                        {format(date, "EEE")}
+                      </p>
+                      <div
+                        onClick={() => handleDateClick(date)}
+                        className={cn(
+                          "aspect-square rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all",
+                          isSelected
+                            ? "bg-accent text-accent-foreground shadow-md"
+                            : "bg-secondary/50 hover:bg-secondary hover:scale-105",
+                          !isCurrentMonth && "opacity-50"
+                        )}
+                      >
+                        <span className="text-sm font-medium">{format(date, "d")}</span>
+                        {postsOnDate.length > 0 && (
+                          <div className="flex gap-0.5 mt-1">
+                            {postsOnDate.slice(0, 2).map((post, i) => (
+                              <div
+                                key={i}
+                                className={cn(
+                                  "w-1 h-1 rounded-full",
+                                  post.platforms.includes("instagram") ? "bg-pink-500" : "bg-blue-600"
+                                )}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Month View */}
+            {viewMode === "month" && (
+              <div className="mb-6">
+                {/* Day Headers */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                    <div key={day} className="text-xs text-muted-foreground text-center py-1">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {monthDays.map((date) => {
+                    const postsOnDate = getPostsForDate(date);
+                    const isSelected = isSameDay(date, selectedDate);
+                    const isCurrentMonth = isSameMonth(date, currentMonth);
+                    const isTodayDate = isToday(date);
+
+                    return (
+                      <div
+                        key={date.toISOString()}
+                        onClick={() => handleDateClick(date)}
+                        className={cn(
+                          "min-h-[60px] p-1 rounded-lg border cursor-pointer transition-all",
+                          isSelected
+                            ? "bg-accent/10 border-accent"
+                            : "border-border hover:border-accent/50 hover:bg-secondary/30",
+                          !isCurrentMonth && "opacity-40"
+                        )}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span
+                            className={cn(
+                              "text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full",
+                              isTodayDate && "bg-accent text-accent-foreground",
+                              isSelected && !isTodayDate && "text-accent"
+                            )}
+                          >
+                            {format(date, "d")}
+                          </span>
+                          {postsOnDate.length > 0 && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {postsOnDate.length}
+                            </span>
+                          )}
+                        </div>
+                        {postsOnDate.length > 0 && (
+                          <div className="space-y-0.5">
+                            {postsOnDate.slice(0, 2).map((post, i) => (
+                              <div
+                                key={i}
+                                className={cn(
+                                  "text-[9px] px-1 py-0.5 rounded truncate",
+                                  post.platforms.includes("instagram")
+                                    ? "bg-pink-500/10 text-pink-600"
+                                    : "bg-blue-600/10 text-blue-600"
+                                )}
+                              >
+                                {post.title.slice(0, 12)}...
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Scheduled Posts */}
             <div className="space-y-3">
