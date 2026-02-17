@@ -1,6 +1,9 @@
 import { Pool } from "pg";
 import { config } from "./config";
 
+const EXEC_SQL_RPC_NAME = "exec_sql";
+const EXEC_SQL_SIGNATURE = "public.exec_sql(sql text)";
+
 const pool = config.DB_DRIVER === "pg"
   ? new Pool({
       connectionString: config.DATABASE_URL ?? undefined,
@@ -67,16 +70,37 @@ function formatSupabaseError(payload: unknown): string {
   }
 
   const err = payload as Record<string, unknown>;
+  const code = typeof err.code === "string" ? err.code : null;
   const pieces = [err.message, err.details, err.hint].filter(
     (v): v is string => typeof v === "string" && v.length > 0,
   );
 
+  if (code) {
+    pieces.unshift(`[${code}]`);
+  }
+
   return pieces.length > 0 ? pieces.join(" | ") : "Unknown Supabase RPC error.";
+}
+
+function isMissingExecSqlFunction(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") {
+    return false;
+  }
+
+  const err = payload as Record<string, unknown>;
+  const message = typeof err.message === "string" ? err.message : "";
+  const details = typeof err.details === "string" ? err.details : "";
+  const code = typeof err.code === "string" ? err.code : "";
+
+  return (
+    code === "PGRST202"
+    && (message.includes(EXEC_SQL_RPC_NAME) || details.includes(EXEC_SQL_RPC_NAME))
+  );
 }
 
 async function queryViaSupabaseRpc<T>(text: string, params: unknown[] = []): Promise<T[]> {
   const sql = interpolateSql(text, params);
-  const response = await fetch(`${config.SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+  const response = await fetch(`${config.SUPABASE_URL}/rest/v1/rpc/${EXEC_SQL_RPC_NAME}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -101,6 +125,12 @@ async function queryViaSupabaseRpc<T>(text: string, params: unknown[] = []): Pro
   }
 
   if (!response.ok) {
+    if (response.status === 404 && isMissingExecSqlFunction(payload)) {
+      throw new Error(
+        `Supabase RPC error (404): Missing ${EXEC_SQL_SIGNATURE}. Apply migrations supabase/migrations/20260217043000_add_exec_sql_rpc.sql and supabase/migrations/20260217093000_refresh_exec_sql_rpc.sql. If they are already applied, run NOTIFY pgrst, 'reload schema';. Alternatively set DATABASE_URL or SUPABASE_DB_URL to use direct pg mode.`,
+      );
+    }
+
     throw new Error(
       `Supabase RPC error (${response.status}): ${formatSupabaseError(payload)}`,
     );
@@ -131,9 +161,12 @@ export async function queryOne<T = unknown>(text: string, params: unknown[] = []
   return rows[0] ?? null;
 }
 
+export async function assertDbReady(): Promise<void> {
+  await queryOne<{ ok: number }>("SELECT 1 AS ok");
+}
+
 export async function closeDb(): Promise<void> {
   if (pool) {
     await pool.end();
   }
 }
-

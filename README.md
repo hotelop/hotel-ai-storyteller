@@ -68,6 +68,7 @@ This project is built with:
 - API entrypoint: `/Users/mac/Documents/EP/hotelops/hotel-ai-storyteller/server/src/index.ts`
 - Schema migration: `/Users/mac/Documents/EP/hotelops/hotel-ai-storyteller/supabase/migrations/20260217030000_ui_backend_extension.sql`
 - RPC migration (Supabase URL+Service Key mode): `/Users/mac/Documents/EP/hotelops/hotel-ai-storyteller/supabase/migrations/20260217043000_add_exec_sql_rpc.sql`
+- RPC refresh migration (PostgREST schema cache reload): `/Users/mac/Documents/EP/hotelops/hotel-ai-storyteller/supabase/migrations/20260217093000_refresh_exec_sql_rpc.sql`
 
 ### Deploy API on Render.com
 
