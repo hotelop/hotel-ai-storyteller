@@ -68,6 +68,18 @@ This project is built with:
 - API entrypoint: `/Users/mac/Documents/EP/hotelops/hotel-ai-storyteller/server/src/index.ts`
 - Schema migration: `/Users/mac/Documents/EP/hotelops/hotel-ai-storyteller/supabase/migrations/20260217030000_ui_backend_extension.sql`
 
+### Deploy API on Render.com
+
+Use a Render **Web Service** with:
+
+- Build Command: `npm ci`
+- Start Command: `npm run api:start`
+- Health Check Path: `/health`
+- Env: `DATABASE_URL` (or `SUPABASE_DB_URL`) + `JWT_SECRET`
+
+Full deployment example is documented in:
+- `/Users/mac/Documents/EP/hotelops/hotel-ai-storyteller/server/README.md`
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
