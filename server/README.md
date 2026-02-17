@@ -35,6 +35,7 @@ Apply:
 
 - `supabase/migrations/20260217030000_ui_backend_extension.sql`
 - `supabase/migrations/20260217043000_add_exec_sql_rpc.sql`
+- `supabase/migrations/20260217093000_refresh_exec_sql_rpc.sql`
 
 This migration is additive and extends existing tables/types.
 
