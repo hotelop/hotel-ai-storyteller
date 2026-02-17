@@ -59,6 +59,14 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Express (for `/v1.0/*` API server in `server/`)
+- PostgreSQL (Supabase-compatible schema in `supabase/migrations/`)
+
+## Backend API (new)
+
+- Start API: `npm run api:dev`
+- API entrypoint: `/Users/mac/Documents/EP/hotelops/hotel-ai-storyteller/server/src/index.ts`
+- Schema migration: `/Users/mac/Documents/EP/hotelops/hotel-ai-storyteller/supabase/migrations/20260217030000_ui_backend_extension.sql`
 
 ## How can I deploy this project?
 

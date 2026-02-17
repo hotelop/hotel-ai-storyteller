@@ -1,0 +1,11 @@
+export { authRouter } from "./auth";
+export { usersRouter } from "./users";
+export { sharedRouter } from "./shared";
+export { dashboardRouter } from "./dashboard";
+export { socialRouter } from "./social";
+export { reviewsRouter } from "./reviews";
+export { messagesRouter } from "./messages";
+export { campaignsRouter } from "./campaigns";
+export { analyticsRouter } from "./analytics";
+export { settingsRouter } from "./settings";
+export { agentsRouter } from "./agents";
