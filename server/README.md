@@ -15,13 +15,19 @@ npm run api:dev
 
 ## Required env vars
 
-- `DATABASE_URL`
+- `DATABASE_URL` or `SUPABASE_DB_URL` (direct Postgres connection string)
 - `JWT_SECRET`
 
 Optional:
 - `PORT`
 - `ACCESS_TOKEN_TTL_HOURS`
 - `MAGIC_LINK_TTL_MINUTES`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_KEY`
+
+Note:
+- This API uses direct SQL via `pg`, so `SUPABASE_URL` + `SUPABASE_SERVICE_KEY` alone are not sufficient.
+- You still need a Postgres connection string (`DATABASE_URL` or `SUPABASE_DB_URL`).
 
 ## Database migration
 
