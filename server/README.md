@@ -15,25 +15,26 @@ npm run api:dev
 
 ## Required env vars
 
-- `DATABASE_URL` or `SUPABASE_DB_URL` (direct Postgres connection string)
+- `SUPABASE_URL` (e.g. `https://<project-ref>.supabase.co`)
+- `SUPABASE_SERVICE_KEY` (service_role key from Supabase Settings -> API)
 - `JWT_SECRET`
 
 Optional:
 - `PORT`
 - `ACCESS_TOKEN_TTL_HOURS`
 - `MAGIC_LINK_TTL_MINUTES`
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_KEY`
+- `DATABASE_URL` or `SUPABASE_DB_URL` (optional fallback for direct `pg` mode)
 
 Note:
-- This API uses direct SQL via `pg`, so `SUPABASE_URL` + `SUPABASE_SERVICE_KEY` alone are not sufficient.
-- You still need a Postgres connection string (`DATABASE_URL` or `SUPABASE_DB_URL`).
+- Default mode uses Supabase PostgREST RPC (`exec_sql`) with `SUPABASE_URL` + `SUPABASE_SERVICE_KEY`.
+- Direct `pg` mode is still available when `DATABASE_URL` or `SUPABASE_DB_URL` is provided.
 
 ## Database migration
 
 Apply:
 
 - `supabase/migrations/20260217030000_ui_backend_extension.sql`
+- `supabase/migrations/20260217043000_add_exec_sql_rpc.sql`
 
 This migration is additive and extends existing tables/types.
 
@@ -50,11 +51,10 @@ Create a new **Web Service** from this repo with:
 
 Set environment variables:
 
-- `DATABASE_URL` (or `SUPABASE_DB_URL`)
-  - Supabase pooler example:
-    - `postgresql://postgres.<project-ref>:<db-password>@aws-0-<region>.pooler.supabase.com:6543/postgres?sslmode=require`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_KEY`
 - `JWT_SECRET`
-- Optional: `ACCESS_TOKEN_TTL_HOURS`, `MAGIC_LINK_TTL_MINUTES`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
+- Optional: `ACCESS_TOKEN_TTL_HOURS`, `MAGIC_LINK_TTL_MINUTES`
 
 ### `render.yaml` example
 
@@ -69,7 +69,9 @@ services:
     startCommand: npm run api:start
     healthCheckPath: /health
     envVars:
-      - key: DATABASE_URL
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
         sync: false
       - key: JWT_SECRET
         sync: false

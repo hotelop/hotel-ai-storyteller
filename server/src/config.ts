@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+type DbDriver = "pg" | "supabase_rpc";
+
 const envSchema = z.object({
   PORT: z.coerce.number().default(8787),
   DATABASE_URL: z.string().min(1).optional(),
@@ -22,21 +24,30 @@ const parsed = envSchema.parse({
   MAGIC_LINK_TTL_MINUTES: process.env.MAGIC_LINK_TTL_MINUTES,
 });
 
-const resolvedDatabaseUrl = parsed.DATABASE_URL ?? parsed.SUPABASE_DB_URL;
+const resolvedDatabaseUrl = parsed.DATABASE_URL ?? parsed.SUPABASE_DB_URL ?? null;
+const hasSupabaseRpcCreds = Boolean(parsed.SUPABASE_URL && parsed.SUPABASE_SERVICE_KEY);
 
-if (!resolvedDatabaseUrl) {
-  if (parsed.SUPABASE_URL && parsed.SUPABASE_SERVICE_KEY) {
-    throw new Error(
-      "Missing Postgres connection string. This API executes SQL directly and needs DATABASE_URL or SUPABASE_DB_URL. SUPABASE_URL/SUPABASE_SERVICE_KEY alone are not enough for pg connections.",
-    );
-  }
-
+if (!resolvedDatabaseUrl && !hasSupabaseRpcCreds) {
   throw new Error(
-    "Missing Postgres connection string. Set DATABASE_URL or SUPABASE_DB_URL.",
+    "Missing database configuration. Set DATABASE_URL/SUPABASE_DB_URL or SUPABASE_URL + SUPABASE_SERVICE_KEY.",
   );
 }
 
+if (!resolvedDatabaseUrl && parsed.SUPABASE_URL && !parsed.SUPABASE_SERVICE_KEY) {
+  throw new Error("Missing SUPABASE_SERVICE_KEY for Supabase RPC mode.");
+}
+
+if (!resolvedDatabaseUrl && parsed.SUPABASE_SERVICE_KEY && !parsed.SUPABASE_URL) {
+  throw new Error("Missing SUPABASE_URL for Supabase RPC mode.");
+}
+
+const dbDriver: DbDriver = resolvedDatabaseUrl ? "pg" : "supabase_rpc";
+
 export const config = {
   ...parsed,
+  DB_DRIVER: dbDriver,
   DATABASE_URL: resolvedDatabaseUrl,
-};
+  SUPABASE_URL: parsed.SUPABASE_URL ?? null,
+  SUPABASE_SERVICE_KEY: parsed.SUPABASE_SERVICE_KEY ?? null,
+} as const;
+

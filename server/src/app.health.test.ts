@@ -6,7 +6,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 let app: Express;
 
 beforeAll(async () => {
-  process.env.DATABASE_URL = process.env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5432/postgres";
+  process.env.SUPABASE_URL = process.env.SUPABASE_URL ?? "https://example-project.supabase.co";
+  process.env.SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY ?? "test-service-role-key";
   process.env.JWT_SECRET = process.env.JWT_SECRET ?? "test-secret-key";
 
   const mod = await import("./app");
